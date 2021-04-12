@@ -1,0 +1,328 @@
+var mysql = require('mysql');
+var express = require('express');
+var app = express();
+var bodyParser = require('body-parser');
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({extended: true}));
+const hostname = '192.249.19.244';
+const port = 80;
+app.listen(port, function () {
+    console.log('서버 실행 중... ' + hostname);
+});
+var pool = mysql.createPool({
+    host: 'localhost',
+    user: 'root',
+    database: 'yes_or_yes',
+    password: '',
+    multipleStates: true,
+    connectionLimit: 20,
+    waitForConnections: false
+});
+app.post('/user/join', function (req, res) {
+    console.log(req.body);
+    var email = req.body.userEmail;
+    var pw = req.body.userPwd;
+    var name = req.body.userName;
+    var params;
+    var sql;
+
+    pool.getConnection(function(err, connection){
+        console.log('first pool');
+        var uMax = 0;
+        var uid = 0;
+
+        connection.query('SELECT MAX(uid) as max FROM users', function(err, result){
+            if(err){
+                console.log('에러1', err);
+            } else{
+                uMax = result[0].max;
+                uid = uMax + 1;
+                params = [uid, email, pw, name];
+            }
+        });
+
+        setTimeout(function2, 2000);
+
+        function function2() {
+            console.log('Blah blah blah blah extra-blah');
+
+            sql = 'INSERT INTO users VALUES (?, ?, ?, ?)';
+    
+            connection.query(sql, params, function (err, result, field) {
+                var resultCode = 404;
+                var message = '에러가 발생했습니다';
+    
+                if (err) {
+                    console.log('에러: ', err);
+    
+                } else {
+                    resultCode = 200;
+                    message = '회원가입에 성공했습니다.';
+                }
+                res.json({
+                    'code': resultCode,
+                    'message': message
+                });
+                connection.release();
+            });
+        }
+    });
+});
+
+app.post('/user/login', function (req, res) {
+    var uid = 0;
+    var userEmail = req.body.userEmail;
+    var userPwd = req.body.userPwd;
+    var sql = 'select * from users where email = ?';
+
+    pool.getConnection(function(err, connection){
+        connection.query(sql, userEmail, function (err, result) {
+            var resultCode = 404;
+            var message = '에러가 발생했습니다';
+            var name = '';
+
+            if (err) {
+                console.log(err);
+
+            } else {
+                if (result.length == 0) {
+                    resultCode = 204;
+                    message = '존재하지 않는 계정입니다!';
+
+                } else if (userPwd != result[0].pw) {
+                    resultCode = 204;
+                    message = '비밀번호가 틀렸습니다!';
+
+                } else {
+                    uid = result[0].uid;
+                    resultCode = 200;
+                    name = result[0].name;
+                    message = name + '님, 환영해요!';
+                    res.json({
+                        'code': resultCode,
+                        'message': message,
+                        'userName': name,
+                        'uid': uid
+                    });
+                }
+            }
+            connection.release();
+        });
+    });
+});
+
+
+app.post('/question/upload', function (req, res) {
+    console.log(req.body);
+    var uid = req.body.uid;
+    var title = req.body.title;
+    var category = req.body.category;
+    var a = req.body.btnA;
+    var b = req.body.btnB;
+
+    var qMax = -1;
+    var qid = -1;
+    var params;
+    
+    pool.getConnection(function(err, connection){
+        connection.query('SELECT MAX(qid) as max FROM questions', function(err, result){
+            if(err){
+                console.log('에러', err);
+
+            } else{
+                qMax = result[0].max;
+                qid = qMax + 1;
+                console.log('잘됨. qid: '+qid);
+                params = [qid, uid, title, category, a, b];
+            }
+        });
+
+        setTimeout(function2, 1000);
+
+        function function2() {
+            console.log('Blah blah blah blah extra-blah');
+
+            var sql = 'INSERT INTO questions VALUES (?, ?, ?, ?, ?, ?)';
+            connection.query(sql, params, function(err, result){
+                var resultCode = 404;
+                var message = '에러가 발생했습니다';
+
+                if(err){
+                    console.log('에러', err);
+                    
+                } else{
+                    resultCode = 200;
+                    message = '질문이 등록되었어요 ^0^';
+                    console.log('intert complete');
+                }
+
+                res.json({
+                    'code': resultCode,
+                    'message': message
+                });
+                connection.release();
+            });
+        }
+    });
+});
+
+
+app.post('/question/get', function (req, res) {
+    console.log('/question/get');
+
+    var qid = new Array();
+    var writer = new Array();
+    var title = new Array();
+    var category = new Array();
+    var aList = new Array();
+    var bList = new Array();
+    var answer = new Array();
+
+    var sql = 'select q.qid, name, title, category, a, b, answer from users u, choice c right join questions q on q.qid = c.qid and c.uid = ? where q.uid = u.uid order by qid DESC';
+    var uid = req.query.uid;
+    
+    pool.getConnection(function(err, connection){
+        connection.query(sql, uid, function (err, result) {
+            if (err) {
+                console.log('에러: ', err);
+
+            } else {
+                console.log('query 완료');
+                const num = result.length;
+
+                for(var i=0; i<num; i++) {
+                    qid[i] = result[i].qid;
+                    writer[i] = result[i].name;
+                    title[i] = result[i].title;
+                    category[i] = result[i].category;
+                    aList[i] = result[i].a;
+                    bList[i] = result[i].b;
+                    answer[i] = result[i].answer;
+                }
+
+                res.json({
+                    'qid': qid,
+                    'writer': writer,
+                    'title': title,
+                    'category': category,
+                    'A': aList,
+                    'B': bList,
+                    'answer': answer
+                });
+            }
+            connection.release();
+        });
+    });
+});
+
+app.post('/question/set', function (req, res) {
+    console.log('/question/get');
+    console.log(req.body);
+
+    var qid = req.body.qid;
+    var title = req.body.title;
+    var category = req.body.category;
+    var a = req.body.A;
+    var b = req.body.B;
+
+    var code;
+    var message;
+    
+    var sql = 'UPDATE questions SET title=?, category=?, A=?, B=? WHERE qid=?';
+    var params = [title, category, a, b, qid];
+
+    pool.getConnection(function(err, connection){
+        connection.query(sql, params, function (err, result) {
+            if (err) {
+                console.log('에러: ', err);
+                code = 404;
+                message = err;
+
+            } else {
+                console.log('UPDATE 완료');
+                code = 200;
+                message = 'UPDATE 완료';
+            }
+            res.json({
+                'code': code,
+                'message': message
+            });
+            connection.release();
+        });
+    });
+});
+
+app.post('/answer/set', function (req, res) {
+    console.log('/question/get');
+    console.log(req.body);
+
+    var uid = req.body.uid;
+    var qid = req.body.qid;
+    var answer = req.body.answer;
+
+    var code;
+    var message;
+
+    //var sql = 'UPDATE choice SET answer=? WHERE uid=?, pid=?';
+    var sql = 'INSERT INTO choice VALUES (?, ?, ?) ON DUPLICATE KEY UPDATE answer=?';
+    var params = [uid, qid, answer, answer];
+
+    pool.getConnection(function(err, connection){
+        connection.query(sql, params, function (err, result) {
+            if (err) {
+                console.log('에러: ', err);
+                code = 404;
+                message = err;
+
+            } else {
+                console.log('UPDATE 완료');
+                code = 200;
+                message = 'UPDATE 완료';
+            }
+            res.json({
+                'code': code,
+                'message': message
+            });
+            connection.release();
+        });
+    });
+});
+
+app.post('/question/percent', function (req, res) {
+    console.log('/question/percent');
+    console.log('query: ', req.query);
+
+    var qid = req.query.qid;
+
+    var numA;
+    var numB;
+
+    var sql1 = 'SELECT COUNT(*) as count FROM choice WHERE qid = ? and answer=0';
+    var sql2 = 'SELECT COUNT(*) as count FROM choice WHERE qid = ? and answer=1';
+    pool.getConnection(function(err, connection){
+        connection.query(sql1, qid, function (err, result) {
+            if (err) {
+                console.log('에러: ', err);
+
+            } else {
+                console.log('percent 완료1');
+                numA = result[0].count;
+            }
+        });
+
+        connection.query(sql2, qid, function (err, result) {
+            if (err) {
+                console.log('에러: ', err);
+
+            } else {
+                console.log('percent 완료2');
+                numB = result[0].count;
+            }
+            res.json({
+                'percentA': numA,
+                'percentB': numB
+            });
+            connection.release();
+        });
+    });
+});

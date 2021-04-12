@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.constraintlayout.widget.ConstraintLayout
+	xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context=".photo.ServerGalleryActivity"
+	android:background="@color/myBlack">
+
+	<androidx.constraintlayout.widget.ConstraintLayout
+		android:id="@+id/constraintLayout"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent">
+
+		<androidx.appcompat.widget.Toolbar
+			android:id="@+id/toolbar"
+			android:layout_width="match_parent"
+			android:layout_height="40dp"
+			android:background="@color/myGray"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent">
+
+			<ImageButton
+				android:id="@+id/backButton"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:src="@drawable/ic_back_button"
+				android:background="#00FFFFFF"
+				android:padding="7dp"
+				android:onClick="backClick"/>
+			<TextView
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="server gallery"
+				android:textColor="@android:color/white"
+				android:textSize="15sp" />
+
+		</androidx.appcompat.widget.Toolbar>
+
+		<androidx.recyclerview.widget.RecyclerView
+			android:id="@+id/recyclerView"
+			android:layout_width="match_parent"
+			android:layout_height="0dp"
+			app:layout_constraintBottom_toBottomOf="parent"
+			app:layout_constraintTop_toBottomOf="@+id/toolbar" />
+	</androidx.constraintlayout.widget.ConstraintLayout>
+
+
+	<LinearLayout
+		android:id="@+id/selevtedImage"
+		android:layout_width="match_parent"
+		android:layout_height="match_parent"
+		android:orientation="vertical"
+		android:visibility="invisible">
+
+		<androidx.appcompat.widget.Toolbar
+			android:layout_width="match_parent"
+			android:layout_height="40dp"
+			android:background="@color/myGray"
+			app:layout_constraintStart_toStartOf="parent"
+			app:layout_constraintTop_toTopOf="parent">
+
+			<ImageButton
+				android:id="@+id/backButton2"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:src="@drawable/ic_back_button"
+				android:background="#00FFFFFF"
+				android:padding="7dp"
+				android:onClick="backClick2"/>
+			<TextView
+				android:id="@+id/imageName"
+				android:layout_width="wrap_content"
+				android:layout_height="wrap_content"
+				android:text="server gallery"
+				android:textColor="@android:color/white"
+				android:textSize="15sp" />
+
+		</androidx.appcompat.widget.Toolbar>
+
+		<ImageView
+			android:id="@+id/imageView"
+			android:layout_width="match_parent"
+			android:layout_height="match_parent"
+			android:onClick="backClick2"/>
+	</LinearLayout>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
